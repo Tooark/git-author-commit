@@ -39,13 +39,12 @@ if [ "$confirm" != "YES" ]; then
     exit 0
 fi
 
-# Create Python callbacks
-EMAIL_CALLBACK="if email == b'$OLD_EMAIL':
-    return b'$NEW_EMAIL'
-return email"
-
-COMMIT_CALLBACK="commit.committer_email = b'$NEW_EMAIL'
-commit.committer_name = b'$NEW_NAME'"
+# Create Python callback
+COMMIT_CALLBACK="if commit.author_email == b'$OLD_EMAIL':
+    commit.author_email = b'$NEW_EMAIL'
+    commit.author_name = b'$NEW_NAME'
+    commit.committer_email = b'$NEW_EMAIL'
+    commit.committer_name = b'$NEW_NAME'"
 
 echo -e "${YELLOW}Preparing repository...${NC}"
 
@@ -75,7 +74,6 @@ echo -e "${YELLOW}Running git-filter-repo...${NC}"
 
 # Execute git-filter-repo with callbacks
 git-filter-repo --force \
-    --email-callback "$EMAIL_CALLBACK" \
     --commit-callback "$COMMIT_CALLBACK"
 
 if [ $? -eq 0 ]; then

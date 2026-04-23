@@ -29,16 +29,13 @@ if ($confirm -ne "YES") {
     exit 0
 }
 
-# Create Python callbacks
-$emailCallback = @"
-if email == b"$OldEmail":
-    return b"$NewEmail"
-return email
-"@
-
+# Create Python callback
 $commitCallback = @"
-commit.committer_email = b"$NewEmail"
-commit.committer_name = b"$NewName"
+if commit.author_email == b"$OldEmail":
+    commit.author_email = b"$NewEmail"
+    commit.author_name = b"$NewName"
+    commit.committer_email = b"$NewEmail"
+    commit.committer_name = b"$NewName"
 "@
 
 Write-Host "Preparing repository..." -ForegroundColor Yellow
@@ -72,7 +69,6 @@ if (-not $gitAvailable) {
 Write-Host "Running git-filter-repo..." -ForegroundColor Yellow
 
 git-filter-repo --force `
-    --email-callback "$emailCallback" `
     --commit-callback "$commitCallback"
 
 if ($LASTEXITCODE -eq 0) {
