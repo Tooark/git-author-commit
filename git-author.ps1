@@ -14,9 +14,10 @@ Write-Host ""
 $gitFilterRepo = Get-Command git-filter-repo -ErrorAction SilentlyContinue
 
 if (-not $gitFilterRepo) {
-    Write-Host "ERROR: git-filter-repo not found in PATH." -ForegroundColor Red
-    Write-Host "Install with: pip install git-filter-repo"
-    exit 1
+  Write-Host "ERROR: git-filter-repo not found in PATH." -ForegroundColor Red
+  Write-Host "Install with: pip install git-filter-repo"
+  Write-Host "Alternative: pipx install git-filter-repo"
+  exit 1
 }
 
 # Confirmation before execution
@@ -25,8 +26,8 @@ Write-Host "This is irreversible and affects all commits." -ForegroundColor Yell
 $confirm = Read-Host "Type 'YES' to continue"
 
 if ($confirm -ne "YES") {
-    Write-Host "Operation cancelled." -ForegroundColor Red
-    exit 0
+  Write-Host "Operation cancelled." -ForegroundColor Red
+  exit 0
 }
 
 # Create Python callback
@@ -43,36 +44,36 @@ Write-Host "Preparing repository..." -ForegroundColor Yellow
 # Check if 'git' is available and we're inside a git repository
 $gitAvailable = Get-Command git -ErrorAction SilentlyContinue
 if (-not $gitAvailable) {
-    Write-Host "Warning: 'git' not available in PATH. Proceeding without stash." -ForegroundColor Yellow
+  Write-Host "Warning: 'git' not available in PATH. Proceeding without stash." -ForegroundColor Yellow
 } else {
-    git rev-parse --is-inside-work-tree 2>$null
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "Warning: Does not appear to be a git repository. Proceeding without stash." -ForegroundColor Yellow
+  git rev-parse --is-inside-work-tree 2>$null
+  if ($LASTEXITCODE -ne 0) {
+    Write-Host "Warning: Does not appear to be a git repository. Proceeding without stash." -ForegroundColor Yellow
+  } else {
+    # Check if there are local changes (including untracked files)
+    $changes = git status --porcelain
+    if ($changes) {
+      Write-Host "Local changes detected. Creating stash 'Git-Author-Commit'..." -ForegroundColor Yellow
+      git stash push -u -m "Git-Author-Commit"
+      if ($LASTEXITCODE -eq 0) {
+        Write-Host "Stash created successfully: 'Git-Author-Commit'." -ForegroundColor Green
+      } else {
+        Write-Host "Failed to create stash. Aborting." -ForegroundColor Red
+        exit 1
+      }
     } else {
-        # Check if there are local changes (including untracked files)
-        $changes = git status --porcelain
-        if ($changes) {
-            Write-Host "Local changes detected. Creating stash 'Git-Author-Commit'..." -ForegroundColor Yellow
-            git stash push -u -m "Git-Author-Commit"
-            if ($LASTEXITCODE -eq 0) {
-                Write-Host "Stash created successfully: 'Git-Author-Commit'." -ForegroundColor Green
-            } else {
-                Write-Host "Failed to create stash. Aborting." -ForegroundColor Red
-                exit 1
-            }
-        } else {
-            Write-Host "No local changes, proceeding." -ForegroundColor Yellow
-        }
+      Write-Host "No local changes, proceeding." -ForegroundColor Yellow
     }
+  }
 }
 
 Write-Host "Running git-filter-repo..." -ForegroundColor Yellow
 
 git-filter-repo --force `
-    --commit-callback "$commitCallback"
+  --commit-callback "$commitCallback"
 
 if ($LASTEXITCODE -eq 0) {
-    Write-Host "`nProcess completed successfully!" -ForegroundColor Green
+  Write-Host "`nProcess completed successfully!" -ForegroundColor Green
 } else {
-    Write-Host "`nAn error occurred during the process." -ForegroundColor Red
+  Write-Host "`nAn error occurred during the process." -ForegroundColor Red
 }

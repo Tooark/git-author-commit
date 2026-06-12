@@ -19,7 +19,7 @@ O **Git Author** utiliza `git-filter-repo` para reescrever o histórico de commi
 
 1. **Git** instalado e configurado (versão 2.0 ou superior)
 2. **Python 3** instalado (versão 3.6 ou superior)
-3. **git-filter-repo** instalado via pip
+3. **git-filter-repo** instalado via pip ou pipx
 
 ### Instalando Pré-requisitos
 
@@ -45,7 +45,12 @@ git-filter-repo --version
 sudo apt-get update
 sudo apt-get install python3 python3-pip
 
-# Instalar git-filter-repo
+# Opção recomendada: instalar com pipx (sem sudo)
+python3 -m pip install --user pipx
+python3 -m pipx ensurepath
+pipx install git-filter-repo
+
+# Alternativa com pip3
 sudo pip3 install git-filter-repo
 
 # Verificar instalação
@@ -323,6 +328,11 @@ pip install --upgrade git-filter-repo
 
 # Ou em alguns sistemas
 pip3 install --upgrade git-filter-repo
+
+# Em Linux, pode ser necessário usar pipx
+python3 -m pip install --user pipx
+python3 -m pipx ensurepath
+pipx install git-filter-repo
 ```
 
 ### Erro: "not a git repository"

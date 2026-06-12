@@ -24,9 +24,10 @@ echo ""
 
 # Check if git-filter-repo is installed
 if ! command -v git-filter-repo &> /dev/null; then
-    echo -e "${RED}ERROR: git-filter-repo not found in PATH.${NC}"
-    echo "Install with: pip install git-filter-repo"
-    exit 1
+  echo -e "${RED}ERROR: git-filter-repo not found in PATH.${NC}"
+  echo "Install with: pip install git-filter-repo"
+  echo "Or (recommended on Linux): pipx install git-filter-repo"
+  exit 1
 fi
 
 # Confirmation before execution
@@ -35,50 +36,50 @@ echo -e "${YELLOW}This is irreversible and affects all commits.${NC}"
 read -p "Type 'YES' to continue: " confirm
 
 if [ "$confirm" != "YES" ]; then
-    echo -e "${RED}Operation cancelled.${NC}"
-    exit 0
+  echo -e "${RED}Operation cancelled.${NC}"
+  exit 0
 fi
 
 # Create Python callback
 COMMIT_CALLBACK="if commit.author_email == b'$OLD_EMAIL':
-    commit.author_email = b'$NEW_EMAIL'
-    commit.author_name = b'$NEW_NAME'
-    commit.committer_email = b'$NEW_EMAIL'
-    commit.committer_name = b'$NEW_NAME'"
+commit.author_email = b'$NEW_EMAIL'
+commit.author_name = b'$NEW_NAME'
+commit.committer_email = b'$NEW_EMAIL'
+commit.committer_name = b'$NEW_NAME'"
 
 echo -e "${YELLOW}Preparing repository...${NC}"
 
 # Check if git is available and we're inside a git repository
 if ! command -v git &> /dev/null; then
-    echo -e "${YELLOW}Warning: 'git' not available in PATH. Proceeding without stash.${NC}"
+  echo -e "${YELLOW}Warning: 'git' not available in PATH. Proceeding without stash.${NC}"
 else
-    if ! git rev-parse --is-inside-work-tree &> /dev/null; then
-        echo -e "${YELLOW}Warning: Does not appear to be a git repository. Proceeding without stash.${NC}"
+  if ! git rev-parse --is-inside-work-tree &> /dev/null; then
+    echo -e "${YELLOW}Warning: Does not appear to be a git repository. Proceeding without stash.${NC}"
+  else
+    # Check if there are local changes (including untracked files)
+    if [ -n "$(git status --porcelain)" ]; then
+      echo -e "${YELLOW}Local changes detected. Creating stash 'Git-Author-Commit'...${NC}"
+      if git stash push -u -m "Git-Author-Commit"; then
+        echo -e "${GREEN}Stash created successfully: 'Git-Author-Commit'.${NC}"
+      else
+        echo -e "${RED}Failed to create stash. Aborting.${NC}"
+        exit 1
+      fi
     else
-        # Check if there are local changes (including untracked files)
-        if [ -n "$(git status --porcelain)" ]; then
-            echo -e "${YELLOW}Local changes detected. Creating stash 'Git-Author-Commit'...${NC}"
-            if git stash push -u -m "Git-Author-Commit"; then
-                echo -e "${GREEN}Stash created successfully: 'Git-Author-Commit'.${NC}"
-            else
-                echo -e "${RED}Failed to create stash. Aborting.${NC}"
-                exit 1
-            fi
-        else
-            echo -e "${YELLOW}No local changes, proceeding.${NC}"
-        fi
+      echo -e "${YELLOW}No local changes, proceeding.${NC}"
     fi
+  fi
 fi
 
 echo -e "${YELLOW}Running git-filter-repo...${NC}"
 
 # Execute git-filter-repo with callbacks
 git-filter-repo --force \
-    --commit-callback "$COMMIT_CALLBACK"
+  --commit-callback "$COMMIT_CALLBACK"
 
 if [ $? -eq 0 ]; then
-    echo -e "${GREEN}Process completed successfully!${NC}"
+  echo -e "${GREEN}Process completed successfully!${NC}"
 else
-    echo -e "${RED}An error occurred during the process.${NC}"
-    exit 1
+  echo -e "${RED}An error occurred during the process.${NC}"
+  exit 1
 fi
